@@ -21,12 +21,6 @@ namespace IBSWeb.Areas.Filpride.Controllers
 {
     [Area(nameof(Filpride))]
     [CompanyAuthorize(nameof(Filpride))]
-    [DepartmentAuthorize(
-        SD.Department_Accounting,
-        SD.Department_RCD,
-        SD.Department_ManagementAccounting,
-        SD.Department_HRAndAdminOrLegal,
-        SD.Department_Finance)]
     public class CheckVoucherNonTradePaymentController : Controller
     {
         private readonly UserManager<ApplicationUser> _userManager;
@@ -158,6 +152,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             }
         }
 
+        [Authorize(Policy = nameof(CheckVoucherNonTradePayment.CheckVoucherNonTradePaymentPreview))]
         [HttpGet]
         public async Task<IActionResult> Print(int? id, CancellationToken cancellationToken)
         {
@@ -196,6 +191,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             return View(viewModel);
         }
 
+        [Authorize(Policy = nameof(CheckVoucherNonTradePayment.CheckVoucherNonTradePaymentPreview))]
         public async Task<IActionResult> Printed(int id, CancellationToken cancellationToken)
         {
             var cv = await _unitOfWork.FilprideCheckVoucher
@@ -231,11 +227,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             return RedirectToAction(nameof(Print), new { id });
         }
 
-        [DepartmentAuthorize(
-            SD.Department_Accounting,
-            SD.Department_RCD,
-            SD.Department_HRAndAdminOrLegal,
-            SD.Department_ManagementAccounting)]
+        [Authorize(Policy = nameof(CheckVoucherNonTradePayment.CheckVoucherNonTradePaymentPost))]
         public async Task<IActionResult> Post(int id, CancellationToken cancellationToken)
         {
             var modelHeader = await _unitOfWork.FilprideCheckVoucher.GetAsync(cv => cv.CheckVoucherHeaderId == id, cancellationToken);
@@ -243,6 +235,12 @@ namespace IBSWeb.Areas.Filpride.Controllers
             if (modelHeader == null)
             {
                 return NotFound();
+            }
+
+            if (modelHeader.PostedBy != null)
+            {
+                TempData["info"] = "Check Voucher has already been posted.";
+                return RedirectToAction(nameof(Print), new { id });
             }
 
             var modelDetails = await _dbContext.FilprideCheckVoucherDetails
@@ -348,13 +346,9 @@ namespace IBSWeb.Areas.Filpride.Controllers
             }
         }
 
+        [Authorize(Policy = nameof(CheckVoucherNonTradePayment.CheckVoucherNonTradePaymentCancel))]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [DepartmentAuthorize(
-            SD.Department_Accounting,
-            SD.Department_RCD,
-            SD.Department_HRAndAdminOrLegal,
-            SD.Department_ManagementAccounting)]
         public async Task<IActionResult> Cancel(int id, string? cancellationRemarks, CancellationToken cancellationToken)
         {
             var existingHeaderModel = await _dbContext.FilprideCheckVoucherHeaders
@@ -498,11 +492,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             }
         }
 
-        [DepartmentAuthorize(
-            SD.Department_Accounting,
-            SD.Department_RCD,
-            SD.Department_HRAndAdminOrLegal,
-            SD.Department_ManagementAccounting)]
+        [Authorize(Policy = nameof(CheckVoucherNonTradePayment.CheckVoucherNonTradePaymentUnpost))]
         public async Task<IActionResult> Unpost(int id, CancellationToken cancellationToken)
         {
             var cvHeader = await _unitOfWork.FilprideCheckVoucher.GetAsync(cv => cv.CheckVoucherHeaderId == id, cancellationToken);
@@ -570,11 +560,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             }
         }
 
-        [DepartmentAuthorize(
-            SD.Department_Accounting,
-            SD.Department_RCD,
-            SD.Department_HRAndAdminOrLegal,
-            SD.Department_ManagementAccounting)]
+        [Authorize(Policy = nameof(CheckVoucherNonTradePayment.CheckVoucherNonTradePaymentEdit))]
         [HttpGet]
         public async Task<IActionResult> Edit(int id, CancellationToken cancellationToken)
         {
@@ -681,6 +667,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             }
         }
 
+        [Authorize(Policy = nameof(CheckVoucherNonTradePayment.CheckVoucherNonTradePaymentEdit))]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(CheckVoucherNonTradePaymentViewModel viewModel, IFormFile? file, CancellationToken cancellationToken)
@@ -1141,11 +1128,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             });
         }
 
-        [DepartmentAuthorize(
-            SD.Department_Accounting,
-            SD.Department_RCD,
-            SD.Department_HRAndAdminOrLegal,
-            SD.Department_ManagementAccounting)]
+        [Authorize(Policy = nameof(CheckVoucherNonTradePayment.CheckVoucherNonTradePaymentCreate))]
         [HttpGet]
         public async Task<IActionResult> Create(CancellationToken cancellationToken)
         {
@@ -1168,6 +1151,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             return View(viewModel);
         }
 
+        [Authorize(Policy = nameof(CheckVoucherNonTradePayment.CheckVoucherNonTradePaymentCreate))]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CheckVoucherNonTradePaymentViewModel viewModel, IFormFile? file, CancellationToken cancellationToken)
@@ -1739,11 +1723,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             });
         }
 
-        [DepartmentAuthorize(
-            SD.Department_Accounting,
-            SD.Department_RCD,
-            SD.Department_HRAndAdminOrLegal,
-            SD.Department_ManagementAccounting)]
+        [Authorize(Policy = nameof(CheckVoucherNonTradePayment.CheckVoucherNonTradePaymentCreateAdvancesToEmployee))]
         [HttpGet]
         public async Task<IActionResult> CreateAdvancesToEmployee(CancellationToken cancellationToken)
         {
@@ -1765,6 +1745,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             return View(viewModel);
         }
 
+        [Authorize(Policy = nameof(CheckVoucherNonTradePayment.CheckVoucherNonTradePaymentCreateAdvancesToEmployee))]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateAdvancesToEmployee(AdvancesToEmployeeViewModel viewModel, CancellationToken cancellationToken)
@@ -1915,11 +1896,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             }
         }
 
-        [DepartmentAuthorize(
-            SD.Department_Accounting,
-            SD.Department_RCD,
-            SD.Department_HRAndAdminOrLegal,
-            SD.Department_ManagementAccounting)]
+        [Authorize(Policy = nameof(CheckVoucherNonTradePayment.CheckVoucherNonTradePaymentEditAdvancesToEmployee))]
         [HttpGet]
         public async Task<IActionResult> EditAdvancesToEmployee(int? id, CancellationToken cancellationToken)
         {
@@ -1986,6 +1963,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             }
         }
 
+        [Authorize(Policy = nameof(CheckVoucherNonTradePayment.CheckVoucherNonTradePaymentEditAdvancesToEmployee))]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditAdvancesToEmployee(AdvancesToEmployeeViewModel viewModel, CancellationToken cancellationToken)
@@ -2152,11 +2130,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             });
         }
 
-        [DepartmentAuthorize(
-            SD.Department_Accounting,
-            SD.Department_RCD,
-            SD.Department_HRAndAdminOrLegal,
-            SD.Department_ManagementAccounting)]
+        [Authorize(Policy = nameof(CheckVoucherNonTradePayment.CheckVoucherNonTradePaymentCreateAdvancesToSupplier))]
         [HttpGet]
         public async Task<IActionResult> CreateAdvancesToSupplier(CancellationToken cancellationToken)
         {
@@ -2177,6 +2151,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             return View(viewModel);
         }
 
+        [Authorize(Policy = nameof(CheckVoucherNonTradePayment.CheckVoucherNonTradePaymentCreateAdvancesToSupplier))]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateAdvancesToSupplier(AdvancesToSupplierViewModel viewModel, CancellationToken cancellationToken)
@@ -2358,11 +2333,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             }
         }
 
-        [DepartmentAuthorize(
-            SD.Department_Accounting,
-            SD.Department_RCD,
-            SD.Department_HRAndAdminOrLegal,
-            SD.Department_ManagementAccounting)]
+        [Authorize(Policy = nameof(CheckVoucherNonTradePayment.CheckVoucherNonTradePaymentEditAdvancesToSupplier))]
         [HttpGet]
         public async Task<IActionResult> EditAdvancesToSupplier(int? id, CancellationToken cancellationToken)
         {
@@ -2431,6 +2402,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             }
         }
 
+        [Authorize(Policy = nameof(CheckVoucherNonTradePayment.CheckVoucherNonTradePaymentEditAdvancesToSupplier))]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditAdvancesToSupplier(AdvancesToSupplierViewModel viewModel, CancellationToken cancellationToken)
@@ -2628,6 +2600,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             return Json(exists);
         }
 
+        [Authorize(Policy = nameof(CheckVoucherNonTradePayment.CheckVoucherNonTradePaymentLiquidateAdvances))]
         public async Task<IActionResult> LiquidateAdvances(int id, DateOnly? liquidateDate, CancellationToken cancellationToken)
         {
             var existingHeaderModel = await _unitOfWork.FilprideCheckVoucher

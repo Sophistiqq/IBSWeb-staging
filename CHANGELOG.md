@@ -6,6 +6,56 @@ and this project adheres to **Semantic Versioning (SemVer)**.
 
 ---
 
+## [v2.7.1] - 2026-05-25
+
+### Fixed
+- Fixed Filpride receiving report cost update entries for COD and prepaid purchase orders so Expanded Withholding Tax advance offsets are applied consistently during both incremental and reversal flows.
+- Fixed Filpride receiving report cost update ledger entries to use the full net-of-VAT cost adjustment amount for related COGS and inventory sales postings.
+
+---
+
+## [v2.7.0] - 2026-05-25
+
+### Added
+- Added a Department Access configuration module for admins to manage per-action department access across Filpride entry modules.
+- Added dynamic policy-based authorization backed by department access records, including the required repositories, authorization handler, policy provider, and database migrations.
+
+### Changed
+- Replaced hard-coded department authorization on Filpride entry actions with policy-based authorization for create, edit, preview, post, unpost, cancel, close, update, and related operational workflows.
+- Added the Department Access admin navigation entry and updated the application version display to `v2.7.0`.
+
+### Fixed
+- Fixed Department Access listing search to avoid filtering on created and edited date fields.
+- Fixed policy-based authorization so Admin users bypass department validation.
+- Fixed repeated posting flows in affected modules by adding duplicate-post guards for records that were already posted.
+
+---
+
+## [v2.6.1] - 2026-05-19
+
+### Changed
+- Added duplicate-action guards to prevent reposting or re-approving records across affected Placement and Filpride posting workflows, including check vouchers, collection receipts, credit/debit memos, delivery receipts, journal vouchers, provisional receipts, purchase orders, receiving reports, sales invoices, and service invoices.
+- Added duplicate-action guards for Filpride delivery receipt delivered and lifting-date recording flows to stop repeated processing once those actions have already been completed.
+
+### Fixed
+- Fixed the Sales Invoice posting closed-period validation message to say `Cannot post this record` instead of `Cannot unpost this record`.
+
+---
+
+## [v2.6.0] - 2026-05-19
+
+### Added
+- Added support for generating the Filpride inventory report for all products, including grouped product sections and per-product totals in the PDF and Excel outputs.
+
+### Changed
+- Updated the Filpride inventory report filters so product and PO selection can be left blank to generate all matching records for the selected month.
+
+### Fixed
+- Fixed Filpride dispatch report delivered `As Of` filtering to use `DeliveredDate` in the PDF and Excel outputs instead of the transaction date.
+- Fixed Filpride dispatch report delivered `As Of` totals and summary sections to include only records delivered on the selected date.
+
+---
+
 ## [v2.5.3] - 2026-05-18
 
 ### Changed

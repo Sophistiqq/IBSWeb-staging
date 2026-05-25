@@ -24,14 +24,6 @@ namespace IBSWeb.Areas.Filpride.Controllers
 {
     [Area(nameof(Filpride))]
     [CompanyAuthorize(nameof(Filpride))]
-    [DepartmentAuthorize(SD.Department_RCD,
-        SD.Department_Finance,
-        SD.Department_Marketing,
-        SD.Department_TradeAndSupply,
-        SD.Department_Logistics,
-        SD.Department_CreditAndCollection,
-        SD.Department_Accounting,
-        SD.Department_ManagementAccounting)]
     public class DeliveryReceiptController : Controller
     {
         private readonly IUnitOfWork _unitOfWork;
@@ -248,7 +240,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             }
         }
 
-        [DepartmentAuthorize(SD.Department_Logistics, SD.Department_RCD)]
+        [Authorize(Policy = nameof(DeliveryReceipts.DeliveryReceiptsCreate))]
         [HttpGet]
         public async Task<IActionResult> Create(CancellationToken cancellationToken)
         {
@@ -276,6 +268,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             return View(viewModel);
         }
 
+        [Authorize(Policy = nameof(DeliveryReceipts.DeliveryReceiptsCreate))]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(DeliveryReceiptViewModel viewModel, CancellationToken cancellationToken)
@@ -448,7 +441,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             }
         }
 
-        [DepartmentAuthorize(SD.Department_Logistics, SD.Department_RCD)]
+        [Authorize(Policy = nameof(DeliveryReceipts.DeliveryReceiptsEdit))]
         [HttpGet]
         public async Task<IActionResult> Edit(int? id, CancellationToken cancellationToken)
         {
@@ -544,6 +537,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             }
         }
 
+        [Authorize(Policy = nameof(DeliveryReceipts.DeliveryReceiptsEdit))]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(DeliveryReceiptViewModel viewModel, CancellationToken cancellationToken)
@@ -674,6 +668,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             }
         }
 
+        [Authorize(Policy = nameof(DeliveryReceipts.DeliveryReceiptsPreview))]
         public async Task<IActionResult> Preview(int? id, CancellationToken cancellationToken)
         {
             ViewBag.FilterType = await GetCurrentFilterType();
@@ -712,6 +707,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             }
         }
 
+        [Authorize(Policy = nameof(DeliveryReceipts.DeliveryReceiptsPreview))]
         public async Task<IActionResult> Printed(int id, CancellationToken cancellationToken)
         {
             var dr = await _unitOfWork.FilprideDeliveryReceipt
@@ -747,6 +743,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             return RedirectToAction(nameof(Preview), new { id });
         }
 
+        [Authorize(Policy = nameof(DeliveryReceipts.DeliveryReceiptsPreview))]
         public async Task<IActionResult> Print(int? id, CancellationToken cancellationToken)
         {
             if (id == null)
@@ -799,6 +796,12 @@ namespace IBSWeb.Areas.Filpride.Controllers
                 if (existingRecord == null)
                 {
                     return BadRequest();
+                }
+
+                if (existingRecord.Status == nameof(DRStatus.PendingDelivery))
+                {
+                    TempData["info"] = "Delivery receipt has already been approved.";
+                    return RedirectToAction(nameof(Preview), new { id });
                 }
 
                 existingRecord.Status = nameof(DRStatus.PendingDelivery);
@@ -931,7 +934,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             });
         }
 
-        [DepartmentAuthorize(SD.Department_Logistics, SD.Department_RCD)]
+        [Authorize(Policy = nameof(DeliveryReceipts.DeliveryReceiptsMarkAsDelivered))]
         public async Task<IActionResult> Delivered(int? id, DateOnly deliveredDate, CancellationToken cancellationToken)
         {
             if (id == null)
@@ -945,6 +948,12 @@ namespace IBSWeb.Areas.Filpride.Controllers
             if (existingRecord == null)
             {
                 return BadRequest();
+            }
+
+            if (existingRecord.PostedBy != null || existingRecord.DeliveredDate != null)
+            {
+                TempData["info"] = "Delivery Receipt has already been marked as delivered.";
+                return RedirectToAction(nameof(Index), new { filterType = await GetCurrentFilterType() });
             }
 
             var minDate = DateOnly.FromDateTime(DateTimeHelper.GetCurrentPhilippineTime()).AddDays(-2);
@@ -1009,9 +1018,9 @@ namespace IBSWeb.Areas.Filpride.Controllers
             }
         }
 
+        [Authorize(Policy = nameof(DeliveryReceipts.DeliveryReceiptsCancel))]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [DepartmentAuthorize(SD.Department_Logistics, SD.Department_RCD)]
         public async Task<IActionResult> Cancel(int id, string? cancellationRemarks, CancellationToken cancellationToken)
         {
             var model = await _unitOfWork.FilprideDeliveryReceipt.GetAsync(dr => dr.DeliveryReceiptId == id, cancellationToken);
@@ -1225,7 +1234,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             return Json(exists);
         }
 
-        [DepartmentAuthorize(SD.Department_TradeAndSupply, SD.Department_RCD)]
+        [Authorize(Policy = nameof(DeliveryReceipts.DeliveryReceiptsRecordLiftingDate))]
         [HttpGet]
         public async Task<IActionResult> RecordLiftingDate(int id, DateOnly liftingDate, CancellationToken cancellationToken)
         {
@@ -1242,6 +1251,12 @@ namespace IBSWeb.Areas.Filpride.Controllers
             if (liftingDate < DateOnly.FromDateTime(minDate) && !User.IsInRole("Admin"))
             {
                 TempData["error"] = $"The selected date cannot be before {minDate:MM/dd/yyyy}.";
+                return RedirectToAction(nameof(Index), new { filterType = await GetCurrentFilterType() });
+            }
+
+            if (model.HasReceivingReport)
+            {
+                TempData["info"] = "Delivery Receipt lifting date has already been recorded.";
                 return RedirectToAction(nameof(Index), new { filterType = await GetCurrentFilterType() });
             }
 
@@ -1348,6 +1363,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             return Json(dr);
         }
 
+        [Authorize(Policy = nameof(DeliveryReceipts.DeliveryReceiptsChangeHaulerFreight))]
         public async Task<IActionResult> ChangeHaulerFreight(int? id, decimal? freight, string? haulerId, CancellationToken cancellationToken)
         {
             if (id == null)

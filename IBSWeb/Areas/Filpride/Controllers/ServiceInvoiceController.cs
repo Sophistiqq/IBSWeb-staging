@@ -21,10 +21,6 @@ namespace IBSWeb.Areas.Filpride.Controllers
 {
     [Area(nameof(Filpride))]
     [CompanyAuthorize(nameof(Filpride))]
-    [DepartmentAuthorize(SD.Department_CreditAndCollection,
-        SD.Department_Finance,
-        SD.Department_RCD,
-        SD.Department_ManagementAccounting)]
     public class ServiceInvoiceController : Controller
     {
         private readonly ApplicationDbContext _dbContext;
@@ -141,7 +137,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             }
         }
 
-        [DepartmentAuthorize(SD.Department_CreditAndCollection, SD.Department_RCD)]
+        [Authorize(Policy = nameof(ServiceInvoice.ServiceInvoiceCreate))]
         [HttpGet]
         public async Task<IActionResult> Create(CancellationToken cancellationToken)
         {
@@ -161,6 +157,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             return View(viewModel);
         }
 
+        [Authorize(Policy = nameof(ServiceInvoice.ServiceInvoiceCreate))]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(ServiceInvoiceViewModel viewModel, CancellationToken cancellationToken)
@@ -269,6 +266,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             }
         }
 
+        [Authorize(Policy = nameof(ServiceInvoice.ServiceInvoicePreview))]
         public async Task<IActionResult> Print(int id, CancellationToken cancellationToken)
         {
             var sv = await _unitOfWork.FilprideServiceInvoice
@@ -291,21 +289,27 @@ namespace IBSWeb.Areas.Filpride.Controllers
             return View(sv);
         }
 
-        [DepartmentAuthorize(SD.Department_CreditAndCollection, SD.Department_RCD)]
+        [Authorize(Policy = nameof(ServiceInvoice.ServiceInvoicePost))]
         public async Task<IActionResult> Post(int id, CancellationToken cancellationToken)
         {
             var model = await _unitOfWork.FilprideServiceInvoice
                 .GetAsync(s => s.ServiceInvoiceId == id, cancellationToken);
 
+            if (model == null)
+            {
+                return NotFound();
+            }
+
+            if (model.PostedBy != null || model.Status == nameof(Status.Posted))
+            {
+                TempData["info"] = "Service invoice has already been posted.";
+                return RedirectToAction(nameof(Print), new { id });
+            }
+
             await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
 
             try
             {
-                if (model == null)
-                {
-                    return NotFound();
-                }
-
                 model.PostedBy = GetUserFullName();
                 model.PostedDate = DateTimeHelper.GetCurrentPhilippineTime();
                 model.Status = nameof(Status.Posted);
@@ -340,9 +344,9 @@ namespace IBSWeb.Areas.Filpride.Controllers
             }
         }
 
+        [Authorize(Policy = nameof(ServiceInvoice.ServiceInvoiceCancel))]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [DepartmentAuthorize(SD.Department_CreditAndCollection, SD.Department_RCD)]
         public async Task<IActionResult> Cancel(int id, string? cancellationRemarks, CancellationToken cancellationToken)
         {
             var model = await _unitOfWork.FilprideServiceInvoice.GetAsync(x => x.ServiceInvoiceId == id, cancellationToken);
@@ -468,7 +472,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             }
         }
 
-        [DepartmentAuthorize(SD.Department_CreditAndCollection, SD.Department_RCD)]
+        [Authorize(Policy = nameof(ServiceInvoice.ServiceInvoiceEdit))]
         [HttpGet]
         public async Task<IActionResult> Edit(int id, CancellationToken cancellationToken)
         {
@@ -504,6 +508,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             return View(viewModel);
         }
 
+        [Authorize(Policy = nameof(ServiceInvoice.ServiceInvoiceEdit))]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(ServiceInvoiceViewModel viewModel, CancellationToken cancellationToken)
@@ -621,6 +626,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             }
         }
 
+        [Authorize(Policy = nameof(ServiceInvoice.ServiceInvoicePreview))]
         public async Task<IActionResult> Printed(int id, CancellationToken cancellationToken)
         {
             var sv = await _unitOfWork.FilprideServiceInvoice
@@ -1015,6 +1021,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             }
         }
 
+        [Authorize(Policy = nameof(ServiceInvoice.ServiceInvoiceUnpost))]
         public async Task<IActionResult> Unpost(int id, CancellationToken cancellationToken)
         {
             await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);

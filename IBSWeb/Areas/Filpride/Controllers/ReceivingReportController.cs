@@ -20,12 +20,6 @@ namespace IBSWeb.Areas.Filpride.Controllers
 {
     [Area(nameof(Filpride))]
     [CompanyAuthorize(nameof(Filpride))]
-    [DepartmentAuthorize(SD.Department_Logistics,
-        SD.Department_TradeAndSupply,
-        SD.Department_Marketing,
-        SD.Department_RCD,
-        SD.Department_CreditAndCollection,
-        SD.Department_ManagementAccounting)]
     public class ReceivingReportController : Controller
     {
         private readonly ApplicationDbContext _dbContext;
@@ -231,6 +225,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             }
         }
 
+        [Authorize(Policy = nameof(ReceivingReport.ReceivingReportCreate))]
         [HttpGet]
         public async Task<IActionResult> Create(CancellationToken cancellationToken)
         {
@@ -249,6 +244,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             return View(viewModel);
         }
 
+        [Authorize(Policy = nameof(ReceivingReport.ReceivingReportCreate))]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(ReceivingReportViewModel viewModel, CancellationToken cancellationToken)
@@ -340,6 +336,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             }
         }
 
+        [Authorize(Policy = nameof(ReceivingReport.ReceivingReportEdit))]
         [HttpGet]
         public async Task<IActionResult> Edit(int? id, CancellationToken cancellationToken)
         {
@@ -408,6 +405,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             }
         }
 
+        [Authorize(Policy = nameof(ReceivingReport.ReceivingReportEdit))]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(ReceivingReportViewModel viewModel, CancellationToken cancellationToken)
@@ -516,6 +514,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             }
         }
 
+        [Authorize(Policy = nameof(ReceivingReport.ReceivingReportPreview))]
         [HttpGet]
         public async Task<IActionResult> Print(int id, CancellationToken cancellationToken)
         {
@@ -541,6 +540,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             return View(receivingReport);
         }
 
+        [Authorize(Policy = nameof(ReceivingReport.ReceivingReportPost))]
         public async Task<IActionResult> Post(int id, CancellationToken cancellationToken)
         {
             var model = await _unitOfWork.FilprideReceivingReport
@@ -549,6 +549,12 @@ namespace IBSWeb.Areas.Filpride.Controllers
             if (model == null)
             {
                 return NotFound();
+            }
+
+            if (model.PostedBy != null)
+            {
+                TempData["info"] = "Receiving Report has already been posted.";
+                return RedirectToAction(nameof(Print), new { id });
             }
 
             await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
@@ -625,6 +631,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             }
         }
 
+        [Authorize(Policy = nameof(ReceivingReport.ReceivingReportCancel))]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Cancel(int id, string? cancellationRemarks, CancellationToken cancellationToken)
@@ -725,6 +732,7 @@ namespace IBSWeb.Areas.Filpride.Controllers
             });
         }
 
+        [Authorize(Policy = nameof(ReceivingReport.ReceivingReportPreview))]
         public async Task<IActionResult> Printed(int id, CancellationToken cancellationToken)
         {
             var rr = await _unitOfWork.FilprideReceivingReport
